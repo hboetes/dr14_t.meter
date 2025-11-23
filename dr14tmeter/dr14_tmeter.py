@@ -27,8 +27,11 @@ from dr14tmeter.dr14_utils import *
 from dr14tmeter.out_messages import *
 from dr14tmeter.dr14_config import *
 from dr14tmeter.database_utils import *
+from multiprocessing import context, freeze_support, SimpleQueue
+from multiprocessing import get_start_method, set_start_method
 
 import os
+import multiprocessing
 import subprocess
 import sys
 import logging
@@ -186,8 +189,23 @@ def main():
         print_msg(
             "----------------------------------------------------------------------\n")
 
+    if not database_exists():
+        print_msg(" ")
+        print_msg(" News ... News ... News ... News ... News  !!! ")
+        print_msg(
+            " With the version 2.0.0 there is the possibility to store all results in a database")
+        print_msg(" If you want to enable this database execute the command:")
+        print_msg("  > %s --enable_database " % get_exe_name())
+        print_msg("")
+        print_msg(
+            " for more details visit: http://dr14tmeter.sourceforge.net/index.php/DR_Database ")
+
     return r
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    freeze_support()
+    if len(sys.argv) > 1:
+        set_start_method(sys.argv[1])
+    print(f"using start method: {get_start_method()}")
     main()
