@@ -214,7 +214,7 @@ class TextTable (Table):
         self._append_txt("")
 
     def end_cell(self):
-        self._append_txt("\t")
+        self._append_txt("  ")
 
     def new_bold(self):
         self._append_txt("")

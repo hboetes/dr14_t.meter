@@ -212,37 +212,57 @@ class WriteDrExtended(WriteDr):
         tm.end_head()
 
         tm.new_tbody()
+        # First pass: calculate maximum column widths
+        dr_width = 4      # " DR" + number (e.g., " DR13")
+        peak_width = 10   # " -XX.XX dB"
+        rms_width = 10    # " -XX.XX dB"
+        duration_width = 8  # "HH:MM"
+
+        for i in range(len(drm.res_list)):
+            if drm.res_list[i]['dr14'] > dr14.min_dr():
+                dr_str = " DR%d" % drm.res_list[i]['dr14']
+                peak_str = " %.2f dB" % drm.res_list[i]['dB_peak']
+                rms_str = " %.2f dB" % drm.res_list[i]['dB_rms']
+                duration_str = drm.res_list[i]['duration']
+
+                dr_width = max(dr_width, len(dr_str))
+                peak_width = max(peak_width, len(peak_str))
+                rms_width = max(rms_width, len(rms_str))
+                duration_width = max(duration_width, len(duration_str))
 
         tm.append_separator_line()
-        tm.append_row(["DR", "Peak", "RMS", "Duration", "Title [codec]"], 'h')
+
+        # Build header with proper widths
+        header_row = [
+            "DR".ljust(dr_width),
+            "Peak".ljust(peak_width),
+            "RMS".ljust(rms_width),
+            "Duration".ljust(duration_width),
+            "Title [codec]"
+        ]
+        tm.append_row(header_row, 'h')
         tm.append_separator_line()
 
         list_bit = []
-
         sum_kbs = 0
         cnt = 0
-
         sampl_rate = []
-
         d_nr = 0
 
         for i in range(len(drm.res_list)):
 
             if drm.res_list[i]['dr14'] > dr14.min_dr():
-                row = []
-                row.append(" DR%d" % drm.res_list[i]['dr14'])
-                row.append(" %.2f" % drm.res_list[i]['dB_peak'] + ' dB')
-                row.append(" %.2f" % drm.res_list[i]['dB_rms'] + ' dB')
-                row.append(drm.res_list[i]['duration'])
-
-                #print( "> " + drm.res_list[i]['file_name'] )
+                # Format each column with proper width and alignment
+                dr_col = (" DR%d" % drm.res_list[i]['dr14']).ljust(dr_width)
+                peak_col = (" %.2f dB" % drm.res_list[i]['dB_peak']).ljust(peak_width)
+                rms_col = (" %.2f dB" % drm.res_list[i]['dB_rms']).ljust(rms_width)
+                duration_col = drm.res_list[i]['duration'].ljust(duration_width)
 
                 curr_file_name = drm.res_list[i]['file_name']
 
                 tr_title = drm.meta_data.get_value(curr_file_name, 'title')
-                #print( "> " + tr_title )
                 if tr_title == None:
-                    row.append(drm.res_list[i]['file_name'])
+                    title_col = drm.res_list[i]['file_name']
                 else:
                     nr = drm.meta_data.get_value(curr_file_name, 'track_nr')
                     codec = drm.meta_data.get_value(curr_file_name, 'codec')
@@ -250,13 +270,13 @@ class WriteDrExtended(WriteDr):
                     if nr == None:
                         nr = i + 1
 
-                    row.append("%02d - %s \t [%s]" % (nr, tr_title, codec))
+                    title_col = "%02d - %s     [%s]" % (nr, tr_title, codec)
+
+                row = [dr_col, peak_col, rms_col, duration_col, title_col]
 
                 bitrate = drm.meta_data.get_value(curr_file_name, 'bitrate')
                 bit = drm.meta_data.get_value(curr_file_name, 'bit')
-                s_rate = drm.meta_data.get_value(
-                    curr_file_name, 'sampling_rate')
-
+                s_rate = drm.meta_data.get_value(curr_file_name, 'sampling_rate')
                 kbs = drm.meta_data.get_value(curr_file_name, 'bitrate')
 
                 if kbs != None:
@@ -270,7 +290,6 @@ class WriteDrExtended(WriteDr):
                     sampl_rate.append(s_rate)
 
                 tm.append_row(row)
-
         tm.end_tbody()
 
         tm.new_foot()
