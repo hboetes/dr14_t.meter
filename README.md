@@ -8,5 +8,6 @@ Dr14 t.meter is released under the terms of the  GNU GPLv3 license and  is inten
 
 I've largely tested this application and it has always returned results identical to those of the official off-line meter. 
 
-
-For more info visit: http://dr14tmeter.sourceforge.net
+### Forked
+Note from the forker @hboetes:
+Since the original project is no longer maintained and doesn't work with python 3.14, I took it upon myself to maintain this project. Please report issues you have with this fork over here. Thanks!
