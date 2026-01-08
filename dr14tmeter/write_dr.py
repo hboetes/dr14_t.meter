@@ -217,6 +217,8 @@ class WriteDrExtended(WriteDr):
         peak_width = 10   # " -XX.XX dB"
         rms_width = 10    # " -XX.XX dB"
         duration_width = 8  # "HH:MM"
+        title_width = 0  # Track title
+        codec_width = 6  # "[codec]"
 
         for i in range(len(drm.res_list)):
             if drm.res_list[i]['dr14'] > dr14.min_dr():
@@ -225,10 +227,27 @@ class WriteDrExtended(WriteDr):
                 rms_str = " %.2f dB" % drm.res_list[i]['dB_rms']
                 duration_str = drm.res_list[i]['duration']
 
+                curr_file_name = drm.res_list[i]['file_name']
+                tr_title = drm.meta_data.get_value(curr_file_name, 'title')
+                codec = drm.meta_data.get_value(curr_file_name, 'codec')
+
+                if tr_title == None:
+                    title_str = drm.res_list[i]['file_name']
+                else:
+                    nr = drm.meta_data.get_value(curr_file_name, 'track_nr')
+                    if nr == None:
+                        nr = i + 1
+                    title_str = "%02d - %s" % (nr, tr_title)
+
+                if codec:
+                    codec_str = "[%s]" % codec
+                    codec_width = max(codec_width, len(codec_str))
+
                 dr_width = max(dr_width, len(dr_str))
                 peak_width = max(peak_width, len(peak_str))
                 rms_width = max(rms_width, len(rms_str))
                 duration_width = max(duration_width, len(duration_str))
+                title_width = max(title_width, len(title_str))
 
         tm.append_separator_line()
 
@@ -238,7 +257,7 @@ class WriteDrExtended(WriteDr):
             "Peak".ljust(peak_width),
             "RMS".ljust(rms_width),
             "Duration".ljust(duration_width),
-            "Title [codec]"
+            "Title".ljust(title_width) + " " + "[codec]".rjust(codec_width)
         ]
         tm.append_row(header_row, 'h')
         tm.append_separator_line()
@@ -253,24 +272,31 @@ class WriteDrExtended(WriteDr):
 
             if drm.res_list[i]['dr14'] > dr14.min_dr():
                 # Format each column with proper width and alignment
-                dr_col = (" DR%d" % drm.res_list[i]['dr14']).ljust(dr_width)
-                peak_col = (" %.2f dB" % drm.res_list[i]['dB_peak']).ljust(peak_width)
-                rms_col = (" %.2f dB" % drm.res_list[i]['dB_rms']).ljust(rms_width)
+                dr_col = ("DR%d" % drm.res_list[i]['dr14']).ljust(dr_width)
+                peak_col = ("%.2f dB" % drm.res_list[i]['dB_peak']).ljust(peak_width)
+                rms_col = ("%.2f dB" % drm.res_list[i]['dB_rms']).ljust(rms_width)
                 duration_col = drm.res_list[i]['duration'].ljust(duration_width)
 
                 curr_file_name = drm.res_list[i]['file_name']
 
                 tr_title = drm.meta_data.get_value(curr_file_name, 'title')
+                codec = drm.meta_data.get_value(curr_file_name, 'codec')
+
                 if tr_title == None:
-                    title_col = drm.res_list[i]['file_name']
+                    title_str = drm.res_list[i]['file_name']
                 else:
                     nr = drm.meta_data.get_value(curr_file_name, 'track_nr')
-                    codec = drm.meta_data.get_value(curr_file_name, 'codec')
 
                     if nr == None:
                         nr = i + 1
+                    title_str = "%02d - %s" % (nr, tr_title)
 
-                    title_col = "%02d - %s     [%s]" % (nr, tr_title, codec)
+                # Left-align title, right-align codec with padding between them
+                if codec:
+                    codec_str = "[%s]" % codec
+                    title_col = title_str.ljust(title_width) + " " + codec_str.rjust(codec_width)
+                else:
+                    title_col = title_str.ljust(title_width) + " " + "".rjust(codec_width)
 
                 row = [dr_col, peak_col, rms_col, duration_col, title_col]
 
