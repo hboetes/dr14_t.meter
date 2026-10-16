@@ -26,8 +26,8 @@ from dr14tmeter.out_messages import print_msg
 ###########################
 # Current version
 v_major = 2
-v_minor = 0
-v_revision = 0
+v_minor = 1
+v_revision = 1
 ###########################
 
 # latest version
@@ -86,7 +86,7 @@ def _dr14_get_latest_version():
     global l_revision
     global lock_ver
 
-    ver_url = "http://simon-r.github.com/dr14_t.meter/ver.html"
+    ver_url = "https://raw.githubusercontent.com/simon-r/dr14_t.meter/refs/heads/gh-pages/ver.html"
     #print_msg ( ver_url )
 
     try:
@@ -180,7 +180,7 @@ def test_mutagen(fun_name):
         import mutagen
     except ImportError:
         print_msg(
-            "The %s function require the installation of MatPlotLib: http://matplotlib.sourceforge.net" % fun_name)
+            "The %s function require the installation of Mutagen: https://mutagen.readthedocs.io" % fun_name)
         return False
 
     return True

@@ -23,5 +23,5 @@ import dr14tmeter.dr14_tmeter
 sys.path.append( "dr14tmeter" )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     dr14tmeter.dr14_tmeter.main()

@@ -1,4 +1,5 @@
 build/
+*.egg-info/
 *.pyc
 .directory
 .vscode
@@ -9,3 +10,6 @@ build/
 *.json
 .pydevproject
 .project
+archlinux/src/
+archlinux/pkg/
+archlinux/*.tar.*

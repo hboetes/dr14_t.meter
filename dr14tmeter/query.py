@@ -15,9 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import datetime
+import shutil
 import sys
 
+from dr14tmeter.console_plot import line_plot
 from dr14tmeter.database import dr_database_singletone
+from dr14tmeter.table import histogram_bar, wrap_text
 
 
 def my_dict_factory(cursor, row):
@@ -60,6 +64,10 @@ class query:
 
     def get_col_keys(self):
         return self.keys
+
+    def get_plot(self, res):
+        # console plot shown after the table of the results, if any
+        return ""
 
 
 class query_top_dr(query):
@@ -188,11 +196,30 @@ class query_dr_histogram(query):
 
     def __init__(self):
         query.__init__(self)
-        self.keys = ["DR", "Freq"]
+        self.keys = ["DR", "Freq", "Histogram"]
 
     def exec_query(self):
         db = dr_database_singletone().get()
-        return db.query(self.get_query(), (), dict_factory_arg=my_dict_factory)
+        res = db.query(self.get_query(), (), dict_factory_arg=my_dict_factory)
+
+        if len(res) == 0:
+            return res
+
+        freq = dict((r["DR"], r["Freq"]) for r in res)
+        max_freq = max(freq.values())
+
+        # the longest bar takes half of the console width
+        width = shutil.get_terminal_size().columns // 2
+
+        # the DR values in between that are not in the database are shown
+        # as empty bins
+        hist = []
+        for dr in range(min(freq), max(freq) + 1):
+            f = freq.get(dr, 0)
+            hist.append({"DR": dr, "Freq": f,
+                         "Histogram": histogram_bar(f, max_freq, width)})
+
+        return hist
 
     def get_query(self):
         q = """
@@ -207,6 +234,9 @@ class query_dr_histogram(query):
 
 
 class query_date_dr_evolution(query):
+
+    # the dates before this year are considered invalid and are not plotted
+    min_year = 1950
 
     def __init__(self):
         query.__init__(self)
@@ -223,12 +253,39 @@ class query_date_dr_evolution(query):
                   inner join dr on dr.id = DR_Track.iddr
                   inner join Date_Track on Date_Track.idtrack = track.id
                   inner join date on date.id = Date_Track.iddate
-                  where dr.dr >= 0  
-                  group by date 
+                  where dr.dr >= 0
+                  group by date
                   order by date ;
         """
 
         return q
+
+    def get_plot(self, res):
+        # the invalid dates (broken tags, or before min_year) would squeeze
+        # the time axis, so they are not plotted
+        last_year = datetime.date.today().year + 1
+        years = [r for r in res if self.min_year <= r["Date"] <= last_year]
+        skipped = [str(r["Date"]) for r in res if r not in years]
+
+        if len(years) == 0:
+            return ""
+
+        console = shutil.get_terminal_size()
+        height = min(max(console.lines // 2, 8), 20)
+
+        txt = "\n Mean DR per year\n\n"
+        txt += line_plot([r["Date"] for r in years],
+                         [r["Mean"] for r in years],
+                         console.columns, height)
+
+        if len(skipped) > 0:
+            note = "Not plotted, invalid years (valid: %d-%d): %s" % (
+                self.min_year, last_year, ", ".join(skipped))
+            txt += "\n"
+            for line in wrap_text(note, max(console.columns - 2, 20)):
+                txt += " " + line + "\n"
+
+        return txt
 
 
 class query_dr_codec(query):

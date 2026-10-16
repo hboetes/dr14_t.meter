@@ -1,5 +1,5 @@
 .\" 
-.TH "dr14_tmeter" "1" "1.0.12" "Simone Riva" "Sound"
+.TH "dr14_tmeter" "1" "2.1.1" "Simone Riva" "Sound"
 .SH "NAME"
 \fBdr14_tmeter\fR \- compute the DR14 value of the audio files according to the algorithm described
 by the Pleasurize Music Foundation.
@@ -41,6 +41,10 @@ This tool is very useful to measure how is loud your music and for understanding
 
 \fB  \-n, \-\-turn_off_out\fR    do not writes the output files
 
+\fB  \-\-no_overwrite\fR        Skip the directories that already contain the selected
+                        output files (e.g. dr14.txt); useful with \-r for
+                        analyzing only the new albums
+
 \fB  \-p, \-\-print_std_out\fR   writes the full result on the std_out
 
 \fB  \-o OUT_DIR, \-\-outdir OUT_DIR\fR
@@ -53,7 +57,7 @@ This tool is very useful to measure how is loud your music and for understanding
 \fB  \-f, \-\-file\fR            Compute the DR14 of a single file and exit
 
 \fB  \-d, \-\-dr_database\fR     Output file compatible with the DR database at
-                        http:///www.dr.loudness\-war.info
+                        http://www.dr.loudness\-war.info
 
 \fB  \-\-hist\fR                Plot the histogram of dynamic of a single file and
                         exit

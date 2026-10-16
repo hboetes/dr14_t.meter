@@ -15,52 +15,41 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from dr14tmeter import dr14_global
+from dr14tmeter.out_messages import print_msg
 import os
-from mutagen.mp3 import MP3
-from mutagen.flac import FLAC
-from mutagen.oggvorbis import OggVorbis
-from mutagen.oggopus import OggOpus
-from mutagen.monkeysaudio import MonkeysAudio
-from mutagen.mp4 import MP4
-from mutagen.id3 import ID3, TXXX
-from dr14tmeter.audio_file_reader import *
+import sys
+
+try:
+    from mutagen.mp3 import MP3
+    from mutagen.flac import FLAC
+    from mutagen.oggvorbis import OggVorbis
+    from mutagen.oggopus import OggOpus
+    from mutagen.monkeysaudio import MonkeysAudio
+    from mutagen.mp4 import MP4
+    from mutagen.id3 import TXXX
+except ImportError:
+    pass
 
 
 class Tagger:
 
-    def __init__(self):
-        self.formats = ['.flac', '.mp3', '.ogg', '.opus', '.mp4',
-                        '.m4a', '.wav', '.ape', '.ac3', '.wma']
-        self.dir_name = ''
-        self._ext = -1
-    
     def write_dr_tags(self, dr):
 
         if not dr14_global.test_mutagen("Tagging"):
             sys.exit(1)
 
-        self.dir_name = dr.dir_name
-        
         for item in dr.res_list:
-            self.read_track_new(item)
+            self.read_track_new(item, dr)
 
-    def get_file_ext_code(self):
-        return self._ext
+    def read_track_new(self, item, dr):
 
-    def read_track_new(self, item):
-
-        (f, ext) = os.path.splitext(item['file_name'])
-        ext = ext.lower()
-
-        if ext not in self.formats:
-            return False
-
-        audio = None
-        filename = self.dir_name + os.sep + item['file_name']
+        ext = os.path.splitext(item['file_name'])[1].lower()
+        filename = os.path.join(dr.dir_name, item['file_name'])
 
         if ext == '.mp3':
             audio = MP3(filename)
-            audio.add_tags
+            if audio.tags is None:
+                audio.add_tags()
         elif ext == '.flac':
             audio = FLAC(filename)
         elif ext == '.ogg':
@@ -69,24 +58,22 @@ class Tagger:
             audio = OggOpus(filename)
         elif ext in ['.mp4', '.m4a']:
             audio = MP4(filename)
-        elif ext == '.wav':
-            raise Exception("Tagging .wav files not supported")
         elif ext == '.ape':
             audio = MonkeysAudio(filename)
-        elif ext == '.ac3':
-            raise Exception("Tagging .ac3 files not supported")
-        elif ext == '.wma':
-            raise Exception("Tagging .wma files not supported")
+        elif ext in ['.wav', '.ac3', '.wma']:
+            print_msg("Tagging %s files not supported: %s" % (ext, item['file_name']))
+            return False
         else:
             return False
 
         if isinstance(audio, MP3):
             audio.tags.add(TXXX(encoding=3, desc=u"DR", text=[str(item["dr14"])]))
+        elif isinstance(audio, MP4):
+            audio["----:com.apple.iTunes:DR"] = [str(item["dr14"]).encode('utf-8')]
         else:
             audio["DR"] = [str(item["dr14"])]
+            audio["ALBUM_DR"] = [str(dr.dr14)]
         
         audio.save()
-        
-        self._ext = self.formats.index(ext)
 
         return True

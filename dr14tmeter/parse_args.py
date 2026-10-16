@@ -50,6 +50,11 @@ def parse_args():
                         dest="turn_off_out",
                         help="do not writes the output files")
 
+    parser.add_argument("--no_overwrite",
+                        action="store_true",
+                        dest="no_overwrite",
+                        help="Skip the directories that already contain the selected output files (e.g. dr14.txt); useful with -r for analyzing only the new albums")
+
     parser.add_argument("-p", "--print_std_out",
                         action="store_true",
                         dest="print_std_out",
@@ -99,7 +104,7 @@ def parse_args():
     parser.add_argument("-d", "--dr_database",
                         action="store_true",
                         dest="dr_database",
-                        help="Output file compatible with the DR database at http:///www.dr.loudness-war.info")
+                        help="Output file compatible with the DR database at http://www.dr.loudness-war.info")
 
     parser.add_argument("--hist",
                         action="store_true",

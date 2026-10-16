@@ -20,6 +20,7 @@ import multiprocessing
 import os
 import tempfile
 import fileinput
+import glob
 import time
 import sys
 
@@ -55,12 +56,11 @@ def scan_files_list(input_file, options, out_dir):
         success = False
     else:
         write_results(dr, options, out_dir, "")
+        success = True
 
     if options.tag:
         tagger = Tagger()
         tagger.write_dr_tags(dr)
-
-        success = True
 
     clock = time.time() - a
     return success, clock, r
@@ -73,6 +73,15 @@ def scan_dir_list(subdirlist, options, out_dir):
     r = 0
 
     for cur_dir in subdirlist:
+        if options.no_overwrite:
+            existing = existing_results(cur_dir, options)
+            if existing:
+                print_msg("\n------------------------------------------------------------ ")
+                print_msg("> Skip Dir: %s " % cur_dir)
+                print_msg("  already analyzed: %s" % " ".join(existing))
+                success = True
+                continue
+
         dr = DynamicRangeMeter()
         dr.write_to_local_db(config.db_is_enabled())
 
@@ -122,6 +131,27 @@ def list_rec_dirs(basedir, subdirlist=None):
     return subdirlist
 
 
+def existing_results(dir_name, options):
+    # the text table is named after the DR value (dr14-DR12.txt), older versions wrote dr14.txt
+    out_files = {
+        'b': ["dr14_bbcode.txt"],
+        't': ["dr14.txt", "dr14-DR*.txt"],
+        'h': ["dr14.html"],
+        'w': ["dr14_mediawiki.txt"]
+    }
+
+    all_tables = 'a' in options.out_tables
+
+    existing = []
+    for code in out_files.keys():
+        if code in options.out_tables or all_tables:
+            for pattern in out_files[code]:
+                for f in glob.glob(os.path.join(glob.escape(dir_name), pattern)):
+                    existing.append(os.path.basename(f))
+
+    return existing
+
+
 def write_results(dr, options, out_dir, cur_dir):
     table_format = not options.basic_table
 
@@ -145,7 +175,8 @@ def write_results(dr, options, out_dir, cur_dir):
             "--------------------------------------------------------------- ")
 
     if options.print_std_out:
-        dr.fwrite_dr("", TextTable(), table_format, True)
+        dr.fwrite_dr("", TextTable(), table_format, True,
+                     dr_database=options.dr_database)
 
     if options.turn_off_out:
         return

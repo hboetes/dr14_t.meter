@@ -357,8 +357,10 @@ class RetirveMetadata:
 
         #print( fmt )
         track['codec'] = re.search(r"\s*(\w+)", fmt[0], re_flags).group(1)
-        track['sampling_rate'] = re.search(r"\s*(\d+)", fmt[1], re_flags).group(1)
-        track['channel'] = re.search(r"^\s*([\S][\s|\S]*[\S])\s*$", fmt[2], re_flags).group(1)
+        track['sampling_rate'] = re.search(
+            r"\s*(\d+)", fmt[1], re_flags).group(1)
+        track['channel'] = re.search(
+            r"^\s*([\S][\s|\S]*[\S])\s*$", fmt[2], re_flags).group(1)
 
         m = re.search(r"\((\d+) bit\)", fmt[3], re_flags)
         if m != None:
